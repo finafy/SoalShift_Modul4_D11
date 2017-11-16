@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <sys/time.h>
 
-static const char *dirpath = "/home/fina/Documents";
+static const char *dirpath = "/home/wenx/Documents";
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
@@ -57,3 +57,47 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	closedir(dp);
 	return 0;
 }
+
+static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
+                                  struct fuse_file_info *fi)
+{
+               int fd;
+               int res;
+               char fpath[1000];
+               sprintf(fpath,"%s%s",dirpath,path);
+              
+               (void) fi;
+              
+               char ext[1000];              
+              
+               fd = open(fpath, O_RDONLY);
+               if (fd == -1)
+                              return -errno;
+               else
+               {
+                              if(strcmp(ext, ".c") == 0 || strcmp(ext, ".txt") == 0 || strcmp(ext, ".doc") == 0|| strcmp(ext, ".ditandai") == 0)
+                              {
+                                             system("zenity --width 400 --error --title 'Error' --text 'Terjadi Kesalahan! File berisi konten berbahaya.'"); }
+
+                              res = pread(fd, buf, size, offset); 
+                              if (res == -1)
+                                             res = -errno;
+
+                              close(fd);
+               }
+               return res;
+}
+
+static struct fuse_operations xmp_oper = {
+	.getattr	= xmp_getattr,
+	.readdir	= xmp_readdir,
+	.read		= xmp_read,
+};
+
+int main(int argc, char *argv[])
+{
+	umask(0);
+	return fuse_main(argc, argv, &xmp_oper, NULL);
+
+}
+
